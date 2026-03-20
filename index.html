@@ -509,7 +509,7 @@ document.getElementById('btn-print').addEventListener('click', function() {
   const origSelects = origPage.querySelectorAll('select');
   const origRadios = origPage.querySelectorAll('input[type="radio"]');
 
-  const inputVals = Array.from(origInputs).map(el => ({ value: el.value, style: el.style.cssText, isRight: el.classList.contains('right') || el.classList.contains('num-input') }));
+  const inputVals = Array.from(origInputs).map(el => ({ value: el.value, style: el.style.cssText, isRight: el.classList.contains('right') || el.classList.contains('num-input') || el.classList.contains('temp-input') }));
   const selectVals = Array.from(origSelects).map(el => ({ text: el.options[el.selectedIndex]?.text || '', value: el.options[el.selectedIndex]?.value || '', style: el.style.cssText }));
   const radioVals = Array.from(origRadios).map(el => el.checked);
 
@@ -521,7 +521,14 @@ document.getElementById('btn-print').addEventListener('click', function() {
     const span = document.createElement('span');
     span.textContent = inputVals[i].value;
     span.style.cssText = inputVals[i].style;
-    if (inputVals[i].isRight) span.style.textAlign = 'right';
+    if (inputVals[i].isRight) {
+      span.style.textAlign = 'right';
+      span.style.display = 'block';
+      span.style.paddingRight = '4px';
+      // 부모 td에도 설정
+      const td = el.closest('td');
+      if (td) td.style.textAlign = 'right';
+    }
     el.replaceWith(span);
   });
 
