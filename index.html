@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>거래명세서</title>
+<style>
+  @media print {
+    body { margin: 0; }
+    .page { page-break-after: always; }
+    input, select { border: none !important; }
+    .action-bar { display: none !important; }
+  }
+  body {
+    font-family: '맑은 고딕', 'Malgun Gothic', sans-serif;
+    font-size: 12px;
+    color: #000;
+    background: #fff;
+  }
+  .page {
+    width: 155mm;
+    min-height: 225mm;
+    padding: 0;
+    box-sizing: border-box;
+    margin: 10px auto;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+  }
+  td, th {
+    border: 1px solid #000;
+    padding: 4px 6px;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 12px;
+  }
+
+  /* 균등 배분 */
+  .j { display: inline-flex; width: 100%; justify-content: space-between; }
+  .jc   { text-align: center; padding-left: 8px;  padding-right: 8px; }
+  .jc-1 { text-align: center; padding-left: 1em;  padding-right: 1em; }
+  .jc-3 { text-align: center; padding-left: 3em;  padding-right: 3em; }
+  .jc-5 { text-align: center; padding-left: 5em;  padding-right: 5em; }
+
+  /* 테이블별 */
+  .header-section { margin-bottom: 0; }
+  .header-section td { height: 24px; }
+  .egg-table td { height: 26px; }
+  .summary-row td { height: 26px; }
+  .bold { font-weight: bold; }
+
+  /* 인감 도장 */
+  .seal {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 1.5px solid #c00;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 16px;
+    font-size: 8px;
+    vertical-align: middle;
+    color: #c00;
+    font-weight: bold;
+  }
+
+  /* 굵은 테두리 */
+  .border-bold   { border: 2px solid #000; }
+  .border-bold-b { border-bottom: 2px solid #000; }
+  .no-border-t   { border-top: none; }
+  .no-border-b   { border-bottom: none; }
+
+  /* 입력 필드 */
+  input, select {
+    height: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    text-align: center;
+    font-size: 12px;
+    font-family: inherit;
+    box-sizing: border-box;
+    padding: 0;
+  }
+  input { width: 100%; }
+  select { width: 45%; appearance: none; -webkit-appearance: none; cursor: pointer; }
+  input.right { text-align: right; }
+  .input-cell { padding: 0 2px; }
+  .input-unit { display: flex; align-items: center; justify-content: center; gap: 0; }
+  .input-unit input { text-align: right; flex: 1; min-width: 0; }
+  .input-unit span { white-space: nowrap; }
+  .num-input { text-align: right !important; padding-right: 4px !important; }
+
+  /* 상단 날짜 드롭다운 */
+  .date-dd { width:3em !important; font-size:16px !important; font-weight:bold; appearance:auto !important; -webkit-appearance:auto !important; }
+
+  /* 산란일자 드롭다운 */
+  .date-select { display: flex; align-items: center; justify-content: center; gap: 0; }
+  .date-select select { text-align: center; text-align-last: center; }
+  .date-select span { padding: 0 2px; }
+
+  /* 날짜 영역 */
+  .date-row { display: flex; align-items: center; justify-content: center; gap: 0; border-bottom: 1px solid #000; }
+  .date-row input { width: 3em; text-align: center; font-size: 16px; font-weight: bold; }
+  .date-row b { font-size: 16px; white-space: nowrap; }
+  .name-row { display: flex; align-items: center; justify-content: flex-end; flex-wrap: nowrap; gap: 0; border-bottom: 1px solid #000; }
+  .name-row input { flex: 1; min-width: 0; text-align: center; border-bottom: none !important; }
+  .name-row b { white-space: nowrap; }
+
+  /* 하단 액션 바 */
+  .action-bar {
+    width: 155mm;
+    margin: 16px auto;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+  .action-bar button {
+    flex: 1;
+    padding: 14px 0;
+    font-size: 16px;
+    font-family: inherit;
+    font-weight: bold;
+    border: 2px solid #000;
+    border-radius: 8px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  #btn-reset {
+    background: #fff;
+    color: #000;
+  }
+  #btn-print {
+    background: #222;
+    color: #fff;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 1. 상단 (90칸) ============ -->
+  <table class="header-section border-bold">
+    <caption class="border-bold no-border-b" style="font-size:22px; font-weight:bold; letter-spacing:8px; padding:6px 0;">거래명세서</caption>
+    <colgroup><col span="90"></colgroup>
+    <tr>
+      <td rowspan="5" colspan="45" style="vertical-align:middle; padding:20px 5em; font-size:14px; line-height:2.4;">
+        <div class="date-row">
+          <b>20</b><select tabindex="1" class="date-dd"><option value="">--</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option></select>
+          <b>년</b><select tabindex="2" class="date-dd"><option value="">--</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select>
+          <b>월</b><select tabindex="3" class="date-dd"><option value="">--</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option></select>
+          <b>일</b>
+        </div>
+        <div class="name-row">
+          <input type="text" tabindex="4" placeholder="">
+          <b>귀하</b>
+        </div>
+        <b style="display:block; text-align:justify; text-align-last:justify;">아래와 같이 계산합니다.</b>
+      </td>
+      <td rowspan="5" colspan="5" class="border-bold" style="writing-mode:vertical-rl; font-weight:bold; font-size:14px; letter-spacing:6px;">공급자</td>
+      <td colspan="10" class="jc"><span class="j"><span>등</span><span>록</span><span>번</span><span>호</span></span></td>
+      <td colspan="30">224 - 93 - 12841</td>
+    </tr>
+    <tr>
+      <td colspan="10" class="jc"><span class="j"><span>상</span><span>호</span></span></td>
+      <td colspan="10" class="jc"><span class="j"><span>성</span><span>원</span><span>농</span><span>장</span></span></td>
+      <td colspan="10" class="jc"><span class="j"><span>성</span><span>명</span></span></td>
+      <td colspan="10">허 빈 <span class="seal">인</span></td>
+    </tr>
+    <tr>
+      <td colspan="10" class="jc"><span class="j"><span>사</span><span>업</span><span>장</span><span>주</span><span>소</span></span></td>
+      <td colspan="30" style="font-size:10px;">경상북도 경주시 천북면 화산공단길 181-73</td>
+    </tr>
+    <tr>
+      <td colspan="10" class="jc"><span class="j"><span>업</span><span>태</span></span></td>
+      <td colspan="10" class="jc"><span class="j"><span>농</span><span>축</span><span>산</span><span>업</span></span></td>
+      <td colspan="10" class="jc"><span class="j"><span>종</span><span>목</span></span></td>
+      <td colspan="10" class="jc"><span class="j"><span>양</span><span>계</span><span>업</span></span></td>
+    </tr>
+    <tr>
+      <td colspan="10" class="jc"><span class="j"><span>전</span><span>화</span></span></td>
+      <td colspan="30"></td>
+    </tr>
+  </table>
+
+  <!-- ============ 2. 합계금액 + 달걀 (9칸) ============ -->
+  <table class="egg-table border-bold no-border-t no-border-b" style="margin-top:-2px;">
+    <colgroup><col span="9"></colgroup>
+    <tr>
+      <td colspan="2" class="border-bold" style="font-weight:bold; font-size:14px;">합계금액</td>
+      <td colspan="7" class="border-bold bold input-cell" style="font-size:14px; text-align:right; padding-right:1em;">
+        <div style="display:flex; align-items:center; justify-content:flex-end;">
+          <input type="text" tabindex="5" class="right" style="width:60%; font-size:14px; font-weight:bold;">
+          <span style="white-space:nowrap;">원整 (&#xFFE6;</span>
+          <input type="text" tabindex="6" inputmode="numeric" class="num-input" style="width:30%; font-size:14px; font-weight:bold; border-bottom:1px solid #000 !important;">
+          <span>)</span>
+        </div>
+      </td>
+    </tr>
+    <tr style="background:#f9f9f9;">
+      <th>구분</th><th>주령</th><th>산란일자</th><th>왕란</th><th>특란</th><th>대란</th><th>중란</th><th>소란</th><th></th>
+    </tr>
+    <!-- 달걀 10행 -->
+    <tr>
+      <td class="input-cell"><div class="input-unit"><input type="text" tabindex="7" inputmode="numeric"><span style="padding-right:4px;">동</span></div></td>
+      <td class="input-cell"><div class="input-unit"><select tabindex="8"><option value="">-</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option><option>32</option><option>33</option><option>34</option><option>35</option><option>36</option><option>37</option><option>38</option><option>39</option><option>40</option><option>41</option><option>42</option><option>43</option><option>44</option><option>45</option><option>46</option><option>47</option><option>48</option><option>49</option><option>50</option><option>51</option><option>52</option></select><span>주</span></div></td>
+      <td class="input-cell" style="padding-left:1em; padding-right:1em;"><div class="date-select"><select tabindex="9"><option value="">월</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select><span>/</span><select tabindex="10"><option value="">일</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option></select></div></td>
+      <td class="input-cell"><input type="text" tabindex="11" inputmode="numeric" class="num-input" data-egg-row="0" data-egg-col="0"></td>
+      <td class="input-cell"><input type="text" tabindex="12" inputmode="numeric" class="num-input" data-egg-row="0" data-egg-col="1"></td>
+      <td class="input-cell"><input type="text" tabindex="13" inputmode="numeric" class="num-input" data-egg-row="0" data-egg-col="2"></td>
+      <td class="input-cell"><input type="text" tabindex="14" inputmode="numeric" class="num-input" data-egg-row="0" data-egg-col="3"></td>
+      <td class="input-cell"><input type="text" tabindex="15" inputmode="numeric" class="num-input" data-egg-row="0" data-egg-col="4"></td>
+      <td class="input-cell"><input type="text" tabindex="16" class="" data-memo="true"></td>
+    </tr>
+    <tr>
+      <td class="input-cell"><div class="input-unit"><input type="text" tabindex="17" inputmode="numeric"><span style="padding-right:4px;">동</span></div></td>
+      <td class="input-cell"><div class="input-unit"><select tabindex="18"><option value="">-</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option><option>32</option><option>33</option><option>34</option><option>35</option><option>36</option><option>37</option><option>38</option><option>39</option><option>40</option><option>41</option><option>42</option><option>43</option><option>44</option><option>45</option><option>46</option><option>47</option><option>48</option><option>49</option><option>50</option><option>51</option><option>52</option></select><span>주</span></div></td>
+      <td class="input-cell" style="padding-left:1em; padding-right:1em;"><div class="date-select"><select tabindex="19"><option value="">월</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select><span>/</span><select tabindex="20"><option value="">일</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option></select></div></td>
+      <td class="input-cell"><input type="text" tabindex="21" inputmode="numeric" class="num-input" data-egg-row="1" data-egg-col="0"></td>
+      <td class="input-cell"><input type="text" tabindex="22" inputmode="numeric" class="num-input" data-egg-row="1" data-egg-col="1"></td>
+      <td class="input-cell"><input type="text" tabindex="23" inputmode="numeric" class="num-input" data-egg-row="1" data-egg-col="2"></td>
+      <td class="input-cell"><input type="text" tabindex="24" inputmode="numeric" class="num-input" data-egg-row="1" data-egg-col="3"></td>
+      <td class="input-cell"><input type="text" tabindex="25" inputmode="numeric" class="num-input" data-egg-row="1" data-egg-col="4"></td>
+      <td class="input-cell"><input type="text" tabindex="26" class="" data-memo="true"></td>
+    </tr>
+    <tr class="border-bold-b">
+      <td class="input-cell"><div class="input-unit"><input type="text" tabindex="27" inputmode="numeric"><span style="padding-right:4px;">동</span></div></td>
+      <td class="input-cell"><div class="input-unit"><select tabindex="28"><option value="">-</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option><option>32</option><option>33</option><option>34</option><option>35</option><option>36</option><option>37</option><option>38</option><option>39</option><option>40</option><option>41</option><option>42</option><option>43</option><option>44</option><option>45</option><option>46</option><option>47</option><option>48</option><option>49</option><option>50</option><option>51</option><option>52</option></select><span>주</span></div></td>
+      <td class="input-cell" style="padding-left:1em; padding-right:1em;"><div class="date-select"><select tabindex="29"><option value="">월</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select><span>/</span><select tabindex="30"><option value="">일</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option></select></div></td>
+      <td class="input-cell"><input type="text" tabindex="31" inputmode="numeric" class="num-input" data-egg-row="2" data-egg-col="0"></td>
+      <td class="input-cell"><input type="text" tabindex="32" inputmode="numeric" class="num-input" data-egg-row="2" data-egg-col="1"></td>
+      <td class="input-cell"><input type="text" tabindex="33" inputmode="numeric" class="num-input" data-egg-row="2" data-egg-col="2"></td>
+      <td class="input-cell"><input type="text" tabindex="34" inputmode="numeric" class="num-input" data-egg-row="2" data-egg-col="3"></td>
+      <td class="input-cell"><input type="text" tabindex="35" inputmode="numeric" class="num-input" data-egg-row="2" data-egg-col="4"></td>
+      <td class="input-cell"><input type="text" tabindex="36" class="" data-memo="true"></td>
+    </tr>
+    <tr>
+      <td class="input-cell"><div class="input-unit"><input type="text" tabindex="37" inputmode="numeric"><span style="padding-right:4px;">동</span></div></td>
+      <td class="input-cell"><div class="input-unit"><select tabindex="38"><option value="">-</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option><option>32</option><option>33</option><option>34</option><option>35</option><option>36</option><option>37</option><option>38</option><option>39</option><option>40</option><option>41</option><option>42</option><option>43</option><option>44</option><option>45</option><option>46</option><option>47</option><option>48</option><option>49</option><option>50</option><option>51</option><option>52</option></select><span>주</span></div></td>
+      <td class="input-cell" style="padding-left:1em; padding-right:1em;"><div class="date-select"><select tabindex="39"><option value="">월</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select><span>/</span><select tabindex="40"><option value="">일</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option></select></div></td>
+      <td class="input-cell"><input type="text" tabindex="41" inputmode="numeric" class="num-input" data-egg-row="3" data-egg-col="0"></td>
+      <td class="input-cell"><input type="text" tabindex="42" inputmode="numeric" class="num-input" data-egg-row="3" data-egg-col="1"></td>
+      <td class="input-cell"><input type="text" tabindex="43" inputmode="numeric" class="num-input" data-egg-row="3" data-egg-col="2"></td>
+      <td class="input-cell"><input type="text" tabindex="44" inputmode="numeric" class="num-input" data-egg-row="3" data-egg-col="3"></td>
+      <td class="input-cell"><input type="text" tabindex="45" inputmode="numeric" class="num-input" data-egg-row="3" data-egg-col="4"></td>
+      <td class="input-cell"><input type="text" tabindex="46" class="" data-memo="true"></td>
+    </tr>
+    <tr>
+      <td class="input-cell"><div class="input-unit"><input type="text" tabindex="47" inputmode="numeric"><span style="padding-right:4px;">동</span></div></td>
+      <td class="input-cell"><div class="input-unit"><select tabindex="48"><option value="">-</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option><option>32</option><option>33</option><option>34</option><option>35</option><option>36</option><option>37</option><option>38</option><option>39</option><option>40</option><option>41</option><option>42</option><option>43</option><option>44</option><option>45</option><option>46</option><option>47</option><option>48</option><option>49</option><option>50</option><option>51</option><option>52</option></select><span>주</span></div></td>
+      <td class="input-cell" style="padding-left:1em; padding-right:1em;"><div class="date-select"><select tabindex="49"><option value="">월</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select><span>/</span><select tabindex="50"><option value="">일</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option></select></div></td>
+      <td class="input-cell"><input type="text" tabindex="51" inputmode="numeric" class="num-input" data-egg-row="4" data-egg-col="0"></td>
+      <td class="input-cell"><input type="text" tabindex="52" inputmode="numeric" class="num-input" data-egg-row="4" data-egg-col="1"></td>
+      <td class="input-cell"><input type="text" tabindex="53" inputmode="numeric" class="num-input" data-egg-row="4" data-egg-col="2"></td>
+      <td class="input-cell"><input type="text" tabindex="54" inputmode="numeric" class="num-input" data-egg-row="4" data-egg-col="3"></td>
+      <td class="input-cell"><input type="text" tabindex="55" inputmode="numeric" class="num-input" data-egg-row="4" data-egg-col="4"></td>
+      <td class="input-cell"><input type="text" tabindex="56" class="" data-memo="true"></td>
+    </tr>
+    <tr class="border-bold-b">
+      <td class="input-cell"><div class="input-unit"><input type="text" tabindex="57" inputmode="numeric"><span style="padding-right:4px;">동</span></div></td>
+      <td class="input-cell"><div class="input-unit"><select tabindex="58"><option value="">-</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option><option>32</option><option>33</option><option>34</option><option>35</option><option>36</option><option>37</option><option>38</option><option>39</option><option>40</option><option>41</option><option>42</option><option>43</option><option>44</option><option>45</option><option>46</option><option>47</option><option>48</option><option>49</option><option>50</option><option>51</option><option>52</option></select><span>주</span></div></td>
+      <td class="input-cell" style="padding-left:1em; padding-right:1em;"><div class="date-select"><select tabindex="59"><option value="">월</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select><span>/</span><select tabindex="60"><option value="">일</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option></select></div></td>
+      <td class="input-cell"><input type="text" tabindex="61" inputmode="numeric" class="num-input" data-egg-row="5" data-egg-col="0"></td>
+      <td class="input-cell"><input type="text" tabindex="62" inputmode="numeric" class="num-input" data-egg-row="5" data-egg-col="1"></td>
+      <td class="input-cell"><input type="text" tabindex="63" inputmode="numeric" class="num-input" data-egg-row="5" data-egg-col="2"></td>
+      <td class="input-cell"><input type="text" tabindex="64" inputmode="numeric" class="num-input" data-egg-row="5" data-egg-col="3"></td>
+      <td class="input-cell"><input type="text" tabindex="65" inputmode="numeric" class="num-input" data-egg-row="5" data-egg-col="4"></td>
+      <td class="input-cell"><input type="text" tabindex="66" class="" data-memo="true"></td>
+    </tr>
+    <tr>
+      <td class="input-cell"><div class="input-unit"><input type="text" tabindex="67" inputmode="numeric"><span style="padding-right:4px;">동</span></div></td>
+      <td class="input-cell"><div class="input-unit"><select tabindex="68"><option value="">-</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option><option>32</option><option>33</option><option>34</option><option>35</option><option>36</option><option>37</option><option>38</option><option>39</option><option>40</option><option>41</option><option>42</option><option>43</option><option>44</option><option>45</option><option>46</option><option>47</option><option>48</option><option>49</option><option>50</option><option>51</option><option>52</option></select><span>주</span></div></td>
+      <td class="input-cell" style="padding-left:1em; padding-right:1em;"><div class="date-select"><select tabindex="69"><option value="">월</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select><span>/</span><select tabindex="70"><option value="">일</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option></select></div></td>
+      <td class="input-cell"><input type="text" tabindex="71" inputmode="numeric" class="num-input" data-egg-row="6" data-egg-col="0"></td>
+      <td class="input-cell"><input type="text" tabindex="72" inputmode="numeric" class="num-input" data-egg-row="6" data-egg-col="1"></td>
+      <td class="input-cell"><input type="text" tabindex="73" inputmode="numeric" class="num-input" data-egg-row="6" data-egg-col="2"></td>
+      <td class="input-cell"><input type="text" tabindex="74" inputmode="numeric" class="num-input" data-egg-row="6" data-egg-col="3"></td>
+      <td class="input-cell"><input type="text" tabindex="75" inputmode="numeric" class="num-input" data-egg-row="6" data-egg-col="4"></td>
+      <td class="input-cell"><input type="text" tabindex="76" class="" data-memo="true"></td>
+    </tr>
+    <tr class="border-bold-b">
+      <td class="input-cell"><div class="input-unit"><input type="text" tabindex="77" inputmode="numeric"><span style="padding-right:4px;">동</span></div></td>
+      <td class="input-cell"><div class="input-unit"><select tabindex="78"><option value="">-</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option><option>32</option><option>33</option><option>34</option><option>35</option><option>36</option><option>37</option><option>38</option><option>39</option><option>40</option><option>41</option><option>42</option><option>43</option><option>44</option><option>45</option><option>46</option><option>47</option><option>48</option><option>49</option><option>50</option><option>51</option><option>52</option></select><span>주</span></div></td>
+      <td class="input-cell" style="padding-left:1em; padding-right:1em;"><div class="date-select"><select tabindex="79"><option value="">월</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select><span>/</span><select tabindex="80"><option value="">일</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option></select></div></td>
+      <td class="input-cell"><input type="text" tabindex="81" inputmode="numeric" class="num-input" data-egg-row="7" data-egg-col="0"></td>
+      <td class="input-cell"><input type="text" tabindex="82" inputmode="numeric" class="num-input" data-egg-row="7" data-egg-col="1"></td>
+      <td class="input-cell"><input type="text" tabindex="83" inputmode="numeric" class="num-input" data-egg-row="7" data-egg-col="2"></td>
+      <td class="input-cell"><input type="text" tabindex="84" inputmode="numeric" class="num-input" data-egg-row="7" data-egg-col="3"></td>
+      <td class="input-cell"><input type="text" tabindex="85" inputmode="numeric" class="num-input" data-egg-row="7" data-egg-col="4"></td>
+      <td class="input-cell"><input type="text" tabindex="86" class="" data-memo="true"></td>
+    </tr>
+    <tr>
+      <td class="input-cell"><div class="input-unit"><input type="text" tabindex="87" inputmode="numeric"><span style="padding-right:4px;">동</span></div></td>
+      <td class="input-cell"><div class="input-unit"><select tabindex="88"><option value="">-</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option><option>32</option><option>33</option><option>34</option><option>35</option><option>36</option><option>37</option><option>38</option><option>39</option><option>40</option><option>41</option><option>42</option><option>43</option><option>44</option><option>45</option><option>46</option><option>47</option><option>48</option><option>49</option><option>50</option><option>51</option><option>52</option></select><span>주</span></div></td>
+      <td class="input-cell" style="padding-left:1em; padding-right:1em;"><div class="date-select"><select tabindex="89"><option value="">월</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select><span>/</span><select tabindex="90"><option value="">일</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option></select></div></td>
+      <td class="input-cell"><input type="text" tabindex="91" inputmode="numeric" class="num-input" data-egg-row="8" data-egg-col="0"></td>
+      <td class="input-cell"><input type="text" tabindex="92" inputmode="numeric" class="num-input" data-egg-row="8" data-egg-col="1"></td>
+      <td class="input-cell"><input type="text" tabindex="93" inputmode="numeric" class="num-input" data-egg-row="8" data-egg-col="2"></td>
+      <td class="input-cell"><input type="text" tabindex="94" inputmode="numeric" class="num-input" data-egg-row="8" data-egg-col="3"></td>
+      <td class="input-cell"><input type="text" tabindex="95" inputmode="numeric" class="num-input" data-egg-row="8" data-egg-col="4"></td>
+      <td class="input-cell"><input type="text" tabindex="96" class="" data-memo="true"></td>
+    </tr>
+    <tr class="border-bold-b">
+      <td class="input-cell"><div class="input-unit"><input type="text" tabindex="97" inputmode="numeric"><span style="padding-right:4px;">동</span></div></td>
+      <td class="input-cell"><div class="input-unit"><select tabindex="98"><option value="">-</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option><option>32</option><option>33</option><option>34</option><option>35</option><option>36</option><option>37</option><option>38</option><option>39</option><option>40</option><option>41</option><option>42</option><option>43</option><option>44</option><option>45</option><option>46</option><option>47</option><option>48</option><option>49</option><option>50</option><option>51</option><option>52</option></select><span>주</span></div></td>
+      <td class="input-cell" style="padding-left:1em; padding-right:1em;"><div class="date-select"><select tabindex="99"><option value="">월</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select><span>/</span><select tabindex="100"><option value="">일</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option></select></div></td>
+      <td class="input-cell"><input type="text" tabindex="101" inputmode="numeric" class="num-input" data-egg-row="9" data-egg-col="0"></td>
+      <td class="input-cell"><input type="text" tabindex="102" inputmode="numeric" class="num-input" data-egg-row="9" data-egg-col="1"></td>
+      <td class="input-cell"><input type="text" tabindex="103" inputmode="numeric" class="num-input" data-egg-row="9" data-egg-col="2"></td>
+      <td class="input-cell"><input type="text" tabindex="104" inputmode="numeric" class="num-input" data-egg-row="9" data-egg-col="3"></td>
+      <td class="input-cell"><input type="text" tabindex="105" inputmode="numeric" class="num-input" data-egg-row="9" data-egg-col="4"></td>
+      <td class="input-cell"><input type="text" tabindex="106" class="" data-memo="true"></td>
+    </tr>
+    <!-- 합계 -->
+    <tr class="summary-row">
+      <td colspan="3" class="jc-5"><span class="j"><span>수</span><span>량</span><span>계</span></span></td>
+      <td class="input-cell" id="qty-0" style="text-align:right; padding-right:4px;"></td>
+      <td class="input-cell" id="qty-1" style="text-align:right; padding-right:4px;"></td>
+      <td class="input-cell" id="qty-2" style="text-align:right; padding-right:4px;"></td>
+      <td class="input-cell" id="qty-3" style="text-align:right; padding-right:4px;"></td>
+      <td class="input-cell" id="qty-4" style="text-align:right; padding-right:4px;"></td>
+      <td></td>
+    </tr>
+    <tr class="summary-row">
+      <td colspan="3" class="jc-5"><span class="j"><span>단</span><span>가</span><span>(</span><span>원</span><span>)</span></span></td>
+      <td class="input-cell"><input type="text" tabindex="107" inputmode="numeric" class="num-input" data-price="0"></td>
+      <td class="input-cell"><input type="text" tabindex="108" inputmode="numeric" class="num-input" data-price="1"></td>
+      <td class="input-cell"><input type="text" tabindex="109" inputmode="numeric" class="num-input" data-price="2"></td>
+      <td class="input-cell"><input type="text" tabindex="110" inputmode="numeric" class="num-input" data-price="3"></td>
+      <td class="input-cell"><input type="text" tabindex="111" inputmode="numeric" class="num-input" data-price="4"></td>
+      <td></td>
+    </tr>
+    <tr class="summary-row">
+      <td colspan="3" class="jc-5"><span class="j"><span>금</span><span>액</span><span>(</span><span>원</span><span>)</span></span></td>
+      <td class="input-cell" id="amt-0" style="text-align:right; padding-right:4px;"></td>
+      <td class="input-cell" id="amt-1" style="text-align:right; padding-right:4px;"></td>
+      <td class="input-cell" id="amt-2" style="text-align:right; padding-right:4px;"></td>
+      <td class="input-cell" id="amt-3" style="text-align:right; padding-right:4px;"></td>
+      <td class="input-cell" id="amt-4" style="text-align:right; padding-right:4px;"></td>
+      <td></td>
+    </tr>
+    <tr class="summary-row">
+      <td colspan="3" class="jc-5"><span class="j"><span>총</span><span>계</span></span></td>
+      <td colspan="6" id="total" style="font-weight:bold; text-align:center;"></td>
+    </tr>
+  </table>
+
+  <!-- ============ 3. 달걀출하정보 + 입금잔고확인 (9칸) ============ -->
+  <table class="border-bold" style="margin-top:-2px;">
+    <colgroup><col span="9"></colgroup>
+    <tr>
+      <td colspan="3" style="font-weight:bold; font-size:14px;">달걀출하정보</td>
+      <td colspan="6" style="font-weight:bold; font-size:14px;">입금 잔고 확인</td>
+    </tr>
+    <tr>
+      <td colspan="2" class="jc-3"><span class="j"><span>무</span><span>항</span><span>생</span><span>제</span><span>달</span><span>걀</span></span></td>
+      <td colspan="2" class="input-cell"><select tabindex="126" style="width:100%;"><option value="">(유&emsp;/&emsp;무)</option><option value="유">유</option><option value="무">무</option></select></td>
+      <td colspan="2" class="jc-3"><span class="j"><span>전</span><span>일</span><span>미</span><span>수</span><span>금</span></span></td>
+      <td colspan="3" class="input-cell"><div class="input-unit"><input type="text" tabindex="127" inputmode="numeric" class="right num-input" style="padding-right:4px;"><span style="padding-right:5em;">원</span></div></td>
+    </tr>
+    <tr>
+      <td colspan="2" class="jc-3"><span class="j"><span>세</span><span>척</span><span>유</span><span>무</span></span></td>
+      <td colspan="2" class="input-cell"><select tabindex="128" style="width:100%;"><option value="">(유&emsp;/&emsp;무)</option><option value="유">유</option><option value="무">무</option></select></td>
+      <td colspan="2" class="jc-3"><span class="j"><span>금</span><span>일</span><span>입</span><span>금</span></span></td>
+      <td colspan="3" class="input-cell"><div class="input-unit"><input type="text" tabindex="129" inputmode="numeric" class="right num-input" style="padding-right:4px;"><span style="padding-right:5em;">원</span></div></td>
+    </tr>
+    <tr>
+      <td colspan="2" class="jc-3"><span class="j"><span>냉</span><span>장</span><span>보</span><span>관</span><span>유</span><span>무</span></span></td>
+      <td colspan="2" class="input-cell"><select tabindex="130" style="width:100%;"><option value="">(유&emsp;/&emsp;무)</option><option value="유">유</option><option value="무">무</option></select></td>
+      <td colspan="2" class="jc-3"><span class="j"><span>현</span><span>재</span><span>잔</span><span>액</span></span></td>
+      <td colspan="3" class="input-cell"><div class="input-unit"><input type="text" tabindex="131" inputmode="numeric" class="right num-input" style="padding-right:4px;"><span style="padding-right:5em;">원</span></div></td>
+    </tr>
+    <tr>
+      <td colspan="2" class="jc-3"><span class="j"><span>사</span><span>육</span><span>방</span><span>식</span></span></td>
+      <td colspan="2" style="font-size:10px; padding:2px 4px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px 4px; text-align:left;">
+          <label><input type="radio" name="farm" value="1" tabindex="132" style="width:10px; height:10px; margin:0 2px 0 0; vertical-align:middle;"> 방사사육</label>
+          <label><input type="radio" name="farm" value="2" style="width:10px; height:10px; margin:0 2px 0 0; vertical-align:middle;"> 축사내평사</label>
+          <label><input type="radio" name="farm" value="3" style="width:10px; height:10px; margin:0 2px 0 0; vertical-align:middle;"> 개선케이지</label>
+          <label><input type="radio" name="farm" value="4" style="width:10px; height:10px; margin:0 2px 0 0; vertical-align:middle;"> 기존케이지</label>
+        </div>
+      </td>
+      <td colspan="2" class="jc-3"><span class="j"><span>농</span><span>장</span><span>출</span><span>고</span><span>자</span></span></td>
+      <td colspan="3" class="input-cell"><div class="input-unit" style="justify-content:flex-end; padding-right:2em;"><input type="text" tabindex="133" style="width:50%;"><span style="margin-left:2em;" class="seal">인</span></div></td>
+    </tr>
+    <tr>
+      <td colspan="2" class="jc-3"><span class="j"><span>차</span><span>량</span><span>번</span><span>호</span></span></td>
+      <td colspan="2" class="input-cell"><input type="text" tabindex="134"></td>
+      <td colspan="2" class="jc-3"><span class="j"><span>차</span><span>량</span><span>청</span><span>결</span><span>상</span><span>태</span></span></td>
+      <td colspan="3" class="input-cell"><select tabindex="135" style="width:100%;"><option value="">(양호&emsp;/&emsp;불량)</option><option value="양호">양호</option><option value="불량">불량</option></select></td>
+    </tr>
+    <tr>
+      <td colspan="2" class="jc-3"><span class="j"><span>차</span><span>량</span><span>온</span><span>도</span></span></td>
+      <td colspan="2" class="input-cell"><div class="input-unit"><input type="text" tabindex="136" inputmode="decimal" class="temp-input"><span style="padding-right:3em;">&#8451;</span></div></td>
+      <td colspan="2" class="jc-3"><span class="j"><span>운</span><span>송</span><span>자</span><span>성</span><span>명</span></span></td>
+      <td colspan="3" class="input-cell"><div class="input-unit" style="justify-content:flex-end; padding-right:2em;"><input type="text" tabindex="137" style="width:50%;"><span style="margin-left:2em;" class="seal">인</span></div></td>
+    </tr>
+  </table>
+
+  <!-- ============ 4. 물류기기 이동전표 (9칸) ============ -->
+  <table class="border-bold no-border-t" style="margin-top:-2px;">
+    <colgroup><col span="9"></colgroup>
+    <tr>
+      <td colspan="9" class="bold" style="font-size:14px; letter-spacing:4px;">물류기기 이동전표</td>
+    </tr>
+    <tr>
+      <td colspan="2" class="jc-3"><span class="j"><span>구</span><span>분</span></span></td>
+      <td class="jc-1"><span class="j"><span>전</span><span>재</span><span>고</span></span></td>
+      <td class="jc-1"><span class="j"><span>출</span><span>고</span></span></td>
+      <td class="jc-1"><span class="j"><span>입</span><span>고</span></span></td>
+      <td class="jc-1"><span class="j"><span>현</span><span>재</span><span>고</span></span></td>
+      <td colspan="3" class="jc-3"><span class="j"><span>매</span><span>입</span><span>확</span><span>인</span><span>자</span></span></td>
+    </tr>
+    <tr>
+      <td colspan="2" class="jc-3"><span class="j"><span>파</span><span>렛</span><span>트</span></span></td>
+      <td class="input-cell"><input type="text" tabindex="138" inputmode="numeric" class="num-input"></td>
+      <td class="input-cell"><input type="text" tabindex="139" inputmode="numeric" class="num-input"></td>
+      <td class="input-cell"><input type="text" tabindex="140" inputmode="numeric" class="num-input"></td>
+      <td class="input-cell"><input type="text" tabindex="141" inputmode="numeric" class="num-input"></td>
+      <td colspan="3" rowspan="2" class="input-cell"><div class="input-unit" style="justify-content:flex-end; padding-right:2em;"><input type="text" tabindex="146" style="width:50%;"><span style="margin-left:2em;" class="seal">인</span></div></td>
+    </tr>
+    <tr>
+      <td colspan="2" class="jc-3"><span class="j"><span>플</span><span>라</span><span>스</span><span>틱</span><span>판</span></span></td>
+      <td class="input-cell"><input type="text" tabindex="142" inputmode="numeric" class="num-input"></td>
+      <td class="input-cell"><input type="text" tabindex="143" inputmode="numeric" class="num-input"></td>
+      <td class="input-cell"><input type="text" tabindex="144" inputmode="numeric" class="num-input"></td>
+      <td class="input-cell"><input type="text" tabindex="145" inputmode="numeric" class="num-input"></td>
+    </tr>
+  </table>
+
+</div>
+
+<!-- 하단 액션 바 -->
+<div class="action-bar">
+  <button id="btn-reset" type="button">초기화</button>
+  <button id="btn-print" type="button">PDF 인쇄</button>
+</div>
+
+<script>
+const fmt = n => n ? Number(n).toLocaleString('ko-KR') : '';
+const raw = v => Number((v || '').replace(/[^\d]/g, '')) || 0;
+
+// 숫자 입력 제한 + 천단위 포맷
+document.querySelectorAll('.num-input').forEach(input => {
+  input.addEventListener('input', function() {
+    const v = this.value.replace(/[^\d]/g, '');
+    this.value = v === '' ? '' : fmt(v);
+    calc();
+  });
+  input.addEventListener('keydown', function(e) {
+    const ok = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Enter','Home','End'];
+    if (ok.includes(e.key) || e.ctrlKey || e.metaKey) return;
+    if (!/^\d$/.test(e.key)) e.preventDefault();
+  });
+});
+
+function calc() {
+  const qtySum = [0,0,0,0,0];
+  // 수량계: 왕란~소란 (col 0~4) 각 열별로 10행 합산
+  for (let c = 0; c < 5; c++) {
+    for (let r = 0; r < 10; r++) {
+      const el = document.querySelector(`[data-egg-row="${r}"][data-egg-col="${c}"]`);
+      if (el) qtySum[c] += raw(el.value);
+    }
+    document.getElementById('qty-' + c).textContent = qtySum[c] ? fmt(qtySum[c]) : '';
+  }
+  // 금액 = 수량계 × 단가, 총계 = 금액 합
+  let total = 0;
+  for (let c = 0; c < 5; c++) {
+    const priceEl = document.querySelector(`[data-price="${c}"]`);
+    const price = raw(priceEl?.value);
+    const amount = qtySum[c] * price;
+    document.getElementById('amt-' + c).textContent = amount ? fmt(amount) : '';
+    total += amount;
+  }
+  document.getElementById('total').textContent = total ? fmt(total) : '';
+}
+
+// 단가 변경 시에도 재계산
+document.querySelectorAll('[data-price]').forEach(el => {
+  el.addEventListener('input', calc);
+});
+
+// 초기화
+document.getElementById('btn-reset').addEventListener('click', function() {
+  if (!confirm('모든 입력을 초기화하시겠습니까?')) return;
+  document.querySelectorAll('.page input[type="text"]').forEach(el => el.value = '');
+  document.querySelectorAll('.page select').forEach(el => el.selectedIndex = 0);
+  document.querySelectorAll('.page input[type="radio"]').forEach(el => el.checked = false);
+  ['qty-0','qty-1','qty-2','qty-3','qty-4','amt-0','amt-1','amt-2','amt-3','amt-4','total'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '';
+  });
+});
+
+// PDF 인쇄 / HTML 저장
+document.getElementById('btn-print').addEventListener('click', function() {
+  const now = new Date();
+  const ts = now.getFullYear().toString() +
+    String(now.getMonth()+1).padStart(2,'0') +
+    String(now.getDate()).padStart(2,'0') + '_' +
+    String(now.getHours()).padStart(2,'0') +
+    String(now.getMinutes()).padStart(2,'0');
+
+  // 정적 HTML 생성: input/select/radio 값을 텍스트로 변환
+  const clone = document.querySelector('.page').cloneNode(true);
+
+  // input → 값 텍스트
+  clone.querySelectorAll('input[type="text"]').forEach(el => {
+    const span = document.createElement('span');
+    span.textContent = el.value;
+    span.style.cssText = el.style.cssText;
+    if (el.classList.contains('right') || el.classList.contains('num-input')) span.style.textAlign = 'right';
+    el.replaceWith(span);
+  });
+
+  // select → 선택된 텍스트
+  clone.querySelectorAll('select').forEach(el => {
+    const span = document.createElement('span');
+    const opt = el.options[el.selectedIndex];
+    span.textContent = (opt && opt.value) ? opt.text : '';
+    span.style.cssText = el.style.cssText;
+    el.replaceWith(span);
+  });
+
+  // radio → 선택된 것에 ■, 나머지 □
+  clone.querySelectorAll('input[type="radio"]').forEach(el => {
+    const span = document.createElement('span');
+    span.textContent = el.checked ? '■' : '□';
+    span.style.cssText = 'font-size:10px; margin-right:2px; vertical-align:middle;';
+    el.replaceWith(span);
+  });
+
+  // 계산된 값 (qty, amt, total)은 이미 textContent로 들어있음
+
+  const styles = document.querySelector('style').outerHTML;
+  const html = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>거래명세서_${ts}</title>${styles}
+<style>.action-bar{display:none!important;} @page{size:155mm 225mm;margin:0;}</style>
+</head><body>${clone.outerHTML}</body></html>`;
+
+  // iOS Safari: 새 탭에 HTML을 열어 공유/인쇄 가능하게
+  // 그 외: Blob 다운로드
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (isIOS) {
+    const w = window.open('', '_blank');
+    if (w) {
+      w.document.write(html);
+      w.document.close();
+    } else {
+      alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.');
+    }
+  } else {
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = ts + '.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+});
+
+// 온도 입력: 숫자, 마이너스, 소수점만 허용
+document.querySelectorAll('.temp-input').forEach(input => {
+  input.addEventListener('keydown', function(e) {
+    const ok = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Enter','Home','End'];
+    if (ok.includes(e.key) || e.ctrlKey || e.metaKey) return;
+    if (e.key === '-' && this.selectionStart === 0 && !this.value.includes('-')) return;
+    if (e.key === '.' && !this.value.includes('.')) return;
+    if (!/^\d$/.test(e.key)) e.preventDefault();
+  });
+  input.addEventListener('input', function() {
+    this.value = this.value.replace(/[^\d.\-]/g, '').replace(/(?!^)-/g, '').replace(/(\..*)\./g, '$1');
+  });
+});
+</script>
+</body>
+</html>
