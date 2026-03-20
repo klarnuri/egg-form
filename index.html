@@ -503,31 +503,40 @@ document.getElementById('btn-print').addEventListener('click', function() {
     String(now.getHours()).padStart(2,'0') +
     String(now.getMinutes()).padStart(2,'0');
 
-  // 정적 HTML 생성: input/select/radio 값을 텍스트로 변환
-  const clone = document.querySelector('.page').cloneNode(true);
+  // 원본에서 값을 미리 수집
+  const origPage = document.querySelector('.page');
+  const origInputs = origPage.querySelectorAll('input[type="text"]');
+  const origSelects = origPage.querySelectorAll('select');
+  const origRadios = origPage.querySelectorAll('input[type="radio"]');
+
+  const inputVals = Array.from(origInputs).map(el => ({ value: el.value, style: el.style.cssText, isRight: el.classList.contains('right') || el.classList.contains('num-input') }));
+  const selectVals = Array.from(origSelects).map(el => ({ text: el.options[el.selectedIndex]?.text || '', value: el.options[el.selectedIndex]?.value || '', style: el.style.cssText }));
+  const radioVals = Array.from(origRadios).map(el => el.checked);
+
+  // 정적 HTML 생성
+  const clone = origPage.cloneNode(true);
 
   // input → 값 텍스트
-  clone.querySelectorAll('input[type="text"]').forEach(el => {
+  clone.querySelectorAll('input[type="text"]').forEach((el, i) => {
     const span = document.createElement('span');
-    span.textContent = el.value;
-    span.style.cssText = el.style.cssText;
-    if (el.classList.contains('right') || el.classList.contains('num-input')) span.style.textAlign = 'right';
+    span.textContent = inputVals[i].value;
+    span.style.cssText = inputVals[i].style;
+    if (inputVals[i].isRight) span.style.textAlign = 'right';
     el.replaceWith(span);
   });
 
   // select → 선택된 텍스트
-  clone.querySelectorAll('select').forEach(el => {
+  clone.querySelectorAll('select').forEach((el, i) => {
     const span = document.createElement('span');
-    const opt = el.options[el.selectedIndex];
-    span.textContent = (opt && opt.value) ? opt.text : '';
-    span.style.cssText = el.style.cssText;
+    span.textContent = selectVals[i].value ? selectVals[i].text : '';
+    span.style.cssText = selectVals[i].style;
     el.replaceWith(span);
   });
 
   // radio → 선택된 것에 ■, 나머지 □
-  clone.querySelectorAll('input[type="radio"]').forEach(el => {
+  clone.querySelectorAll('input[type="radio"]').forEach((el, i) => {
     const span = document.createElement('span');
-    span.textContent = el.checked ? '■' : '□';
+    span.textContent = radioVals[i] ? '■' : '□';
     span.style.cssText = 'font-size:10px; margin-right:2px; vertical-align:middle;';
     el.replaceWith(span);
   });
